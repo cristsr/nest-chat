@@ -21,16 +21,16 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Post('register')
-  async register(@Body() createUserDto: CreateUserDto) {
-    return this.authService.register(createUserDto);
-  }
-
-  @Public()
   @UseGuards(AuthGuard('local'))
   @Post('login')
   login(@CurrentUser() user: LoginUserDto): LoginResponseDto {
     return this.authService.generateJwt(user);
+  }
+
+  @Public()
+  @Post('register')
+  async register(@Body() createUserDto: CreateUserDto) {
+    return this.authService.register(createUserDto);
   }
 
   @Public()
@@ -40,15 +40,12 @@ export class AuthController {
   }
 
   @Public()
-  @Get('validate-recovery-token')
-  async validateRecoveryToken(@Query('token') token: string) {
-    return this.authService.validateRecoveryToken(token);
-  }
-
-  @Public()
-  @Post('change-password')
-  async recoveryPassword(@Body() { recoveryToken, password }) {
-    return this.authService.changePassword(recoveryToken, password);
+  @Post('reset-password')
+  async validateRecoveryToken(
+    @Query('token') token: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.resetPassword(token, password);
   }
 
   @Get('refresh')
