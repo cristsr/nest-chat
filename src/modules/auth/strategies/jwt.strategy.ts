@@ -1,19 +1,13 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CONFIG } from 'config/config-keys';
 import { UserDto } from 'modules/user/dto/user.dto';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  private readonly logger = new Logger('JwtStrategy');
-
-  constructor(
-    private configService: ConfigService,
-    private jwtService: JwtService,
-  ) {
+  constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -26,10 +20,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * and it returns a model with information signed in jwt
    * @param payload
    */
-  validate(payload: UserDto): UserDto {
-    this.logger.log('Payload', payload);
-
-    // this.jwtService.verify()
-    return payload;
+  validate(payload: any): UserDto {
+    return {
+      id: payload.id,
+      email: payload.email,
+      nickname: payload.nickname,
+      name: payload.name,
+    };
   }
 }

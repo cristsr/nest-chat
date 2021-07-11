@@ -14,7 +14,6 @@ import { CONFIG } from 'config/config-keys';
 import { JwtResponseDto } from 'modules/auth/dto/jwt-response.dto';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { RecoveryPasswordRepository } from 'modules/user/repositories/recovery-password/recovery-password-repository';
-import { RecoveryPasswordDocument } from 'modules/user/entities/recovery-password.entity';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
@@ -125,8 +124,9 @@ export class AuthService {
   /**
    * Called by controller after passport local strategy validation
    * @param user model created in jwt strategy
+   * @param onlyJwt
    */
-  generateJwt(user: UserDto): LoginResponseDto {
+  generateJwt(user: UserDto, onlyJwt = false): LoginResponseDto {
     this.logger.log('Start method execution: ' + getMethodName());
 
     const accessToken = this.jwtService.sign(user, {
@@ -134,23 +134,31 @@ export class AuthService {
       expiresIn: this.config.get(CONFIG.JWT_EXPIRATION_TIME),
     });
 
+    const expiresIn = +this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, -1);
+
+    if (onlyJwt) {
+      return {
+        credentials: {
+          accessToken,
+          tokenType: 'Bearer',
+          expiresIn,
+        },
+      };
+    }
+
     const refreshToken = this.jwtService.sign(user, {
       secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
     });
 
-    const expiresIn = +this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, -1);
-
-    const credentials = {
-      accessToken,
-      tokenType: 'Bearer',
-      expiresIn,
-      refreshToken,
-    };
-
     this.logger.log('Credentials generated successfully');
 
     return {
-      credentials,
+      credentials: {
+        accessToken,
+        tokenType: 'Bearer',
+        expiresIn,
+        refreshToken,
+      },
       user,
     };
   }
@@ -208,6 +216,7 @@ export class AuthService {
 
   /**
    * Validate recovery token sent to user email
+   * and save new password
    * @param token
    * @param password
    */
@@ -215,6 +224,8 @@ export class AuthService {
     token: string,
     password: string,
   ): Promise<{ success: boolean }> {
+    this.logger.log('Start method execution: ' + getMethodName());
+
     const str = await this.cypher.decrypt(
       token,
       this.config.get(CONFIG.RECOVERY_SECRET_KEY),
@@ -260,8 +271,10 @@ export class AuthService {
    * @param user
    */
   async refresh(user: any) {
+    this.logger.log('Start method execution: ' + getMethodName());
+
     const payload = {
-      _id: user._id,
+      id: user.id,
       username: user.name,
       email: user.email,
     };

@@ -21,8 +21,3 @@ export class CreateUserDto extends OmitType(UserDto, ['id']) {
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
-
-export class LoginUserDto extends UserDto {
-  @IsString()
-  refreshSecret;
-}

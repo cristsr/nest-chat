@@ -8,8 +8,7 @@ export class LoginResponseDto {
     accessToken: string;
     tokenType: string;
     expiresIn: number;
-    refreshToken: string;
+    refreshToken?: string;
   };
-
-  user: UserDto;
+  user?: UserDto;
 }

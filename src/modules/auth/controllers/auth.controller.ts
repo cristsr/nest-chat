@@ -1,20 +1,13 @@
-import {
-  Controller,
-  Get,
-  Post,
-  UseGuards,
-  Request,
-  Body,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Body, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from 'modules/auth/services/auth.service';
 import { Public } from 'modules/auth/decorators/public';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
-import { CreateUserDto, LoginUserDto } from 'modules/user/dto/user.dto';
+import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { uid } from 'uid/secure';
 import { ForgotPasswordDto } from 'modules/user/dto/recovery-password.dto';
+import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,7 +16,7 @@ export class AuthController {
   @Public()
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  login(@CurrentUser() user: LoginUserDto): LoginResponseDto {
+  login(@CurrentUser() user: UserDto): LoginResponseDto {
     return this.authService.generateJwt(user);
   }
 
@@ -48,9 +41,11 @@ export class AuthController {
     return this.authService.resetPassword(token, password);
   }
 
+  @Public()
+  @UseGuards(RefreshJwtGuard)
   @Get('refresh')
-  refreshToken(@Request() request) {
-    return this.authService.refresh(request.user);
+  refreshToken(@CurrentUser() user: UserDto) {
+    return this.authService.generateJwt(user, true);
   }
 
   @Public()
