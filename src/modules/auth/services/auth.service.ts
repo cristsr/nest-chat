@@ -209,8 +209,12 @@ export class AuthService {
   /**
    * Validate recovery token sent to user email
    * @param token
+   * @param password
    */
-  async validateRecoveryToken(token: string): Promise<{ success: boolean }> {
+  async resetPassword(
+    token: string,
+    password: string,
+  ): Promise<{ success: boolean }> {
     const str = await this.cypher.decrypt(
       token,
       this.config.get(CONFIG.RECOVERY_SECRET_KEY),
@@ -227,9 +231,9 @@ export class AuthService {
       throw new UnprocessableEntityException('Invalid token');
     }
 
-    const record: UserDocument = await this.userService.findByEmail(data.user);
+    const user: UserDocument = await this.userService.findByEmail(data.user);
 
-    if (!record) {
+    if (!user) {
       throw new NotFoundException('User not found');
     }
 
@@ -238,38 +242,6 @@ export class AuthService {
     if (currentDate > data.expTime) {
       throw new UnprocessableEntityException('Your request has expired');
     }
-
-    return {
-      success: true,
-    };
-  }
-  /**
-   * Search a recovery account record by token given previously via email
-   * and set the new password to user;
-   * @param recoveryToken
-   * @param password
-   */
-  async changePassword(recoveryToken: string, password: string) {
-    this.logger.log('Start method execution: ' + getMethodName());
-
-    const record: RecoveryPasswordDocument | null =
-      await this.recoveryPasswordService.findOne(recoveryToken);
-
-    if (!record) {
-      throw new BadRequestException('Token de recuperacion invalido o nulo');
-    }
-
-    // return record;
-    const currentDate = new Date();
-    const dueDate = new Date(record.dueDate);
-
-    if (currentDate > dueDate) {
-      throw new UnprocessableEntityException(
-        'El token de recuperacion ha caducado',
-      );
-    }
-
-    const user = record.user as UserDocument;
 
     user.password = await bcrypt.hash(
       password,
