@@ -24,10 +24,14 @@ import * as bcrypt from 'bcrypt';
 import { UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { MailerService } from '../../../mailer/mailer.service';
+import { RecoveryPasswordDto } from 'modules/user/dto/recovery-password.dto';
+import { validateOrReject } from 'class-validator';
+import { uid } from 'uid/secure';
+import { CypherService } from 'utils/cypher/cypher.service';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger('AuthService');
+  private readonly logger = new Logger(AuthService.name);
 
   constructor(
     private config: ConfigService,
@@ -35,6 +39,7 @@ export class AuthService {
     private recoveryPasswordService: RecoveryPasswordRepository,
     private jwtService: JwtService,
     private mailerService: MailerService,
+    private cypher: CypherService,
   ) {}
 
   /**
@@ -43,7 +48,7 @@ export class AuthService {
    * @param email
    * @param pass
    */
-  async validateUser(email: string, pass: string): Promise<UserDto> {
+  async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.userService.findByEmail(email);
 
     if (!user) {
@@ -75,6 +80,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       nickname: user.nickname,
+      refreshSecret: user.refreshSecret,
     };
   }
 
@@ -86,7 +92,7 @@ export class AuthService {
     const credentials = {
       accessToken: this.jwtService.sign(user),
       tokenType: 'Bearer',
-      expiresIn: this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, -1),
+      expiresIn: +this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, -1),
       refreshToken: this.jwtService.sign(user, {
         secret: this.config.get(CONFIG.JWT_SECRET_KEY),
       }),
@@ -111,12 +117,18 @@ export class AuthService {
       throw new BadRequestException('The given email is already registered');
     }
 
-    user.password = await bcrypt.hash(
+    const password = await bcrypt.hash(
       user.password,
-      +this.config.get(CONFIG.BCRYPT_SALT_OR_ROUNDS),
+      +this.config.get(CONFIG.BCRYPT_SALT_ROUNDS),
     );
 
-    await this.userService.create(user);
+    const refreshSecret = await this.cypher.encrypt(uid(64));
+
+    await this.userService.create({
+      ...user,
+      password,
+      refreshSecret,
+    });
 
     // Log
     this.logger.log('User registered successfully ' + user.email);
@@ -133,24 +145,30 @@ export class AuthService {
   async forgotPassword(user: ForgotPasswordDto) {
     this.logger.log('Call forgotPassword method');
 
-    const record: UserDocument | null = await this.userService.findByEmail(
-      user.email,
-    );
+    const record: UserDocument = await this.userService.findByEmail(user.email);
 
     if (!record) {
       this.logger.log('User not registered: ' + user.email);
 
-      throw new BadRequestException('The given email is not registered');
+      throw new NotFoundException('The given email is not registered');
     }
 
     // User is registered
+
     const minute = 60000;
     const currentDate = new Date().getTime();
     const dueDate = new Date(currentDate + minute).toISOString();
     const recoveryToken = randomBytes(32).toString('hex');
 
+    const recoveryPassword = new RecoveryPasswordDto();
+    recoveryPassword.user = record.id;
+
+    await validateOrReject(recoveryPassword).catch((e) => {
+      throw new UnprocessableEntityException(e.error);
+    });
+
     await this.recoveryPasswordService.create({
-      user: record._id,
+      user: record.id,
       dueDate,
       recoveryToken,
     });
@@ -162,6 +180,7 @@ export class AuthService {
       text: 'lorem*10',
     };
 
+    // Send recovery password mail
     await this.mailerService.sendMail(mailerConfig);
 
     // try {
@@ -181,6 +200,8 @@ export class AuthService {
     //     'No se pudo enviar el correo al usuario registrado',
     //   );
     // }
+
+    this.logger.log('Recovery password mail was sent: ' + user.email);
 
     return {
       success: true,
@@ -215,7 +236,7 @@ export class AuthService {
 
     user.password = await bcrypt.hash(
       password,
-      +this.config.get(CONFIG.BCRYPT_SALT_OR_ROUNDS),
+      +this.config.get(CONFIG.BCRYPT_SALT_ROUNDS),
     );
 
     await user.save();
@@ -239,7 +260,7 @@ export class AuthService {
     const jwtResponse: JwtResponseDto = {
       accessToken: this.jwtService.sign(payload),
       tokenType: 'Bearer',
-      expiresIn: this.config.get(CONFIG.JWT_EXPIRATION_TIME),
+      expiresIn: +this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, 1),
     };
 
     return jwtResponse;

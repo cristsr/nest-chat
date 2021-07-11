@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { RestJwtAuthGuard } from 'modules/auth/guards/rest-jwt-auth.guard';
 import { CONFIG } from 'config/config-keys';
 import { MailerModule } from '../../mailer/mailer.module';
+import { CypherModule } from '../../utils/cypher/cypher.module';
 
 @Module({
   imports: [
@@ -26,6 +27,12 @@ import { MailerModule } from '../../mailer/mailer.module';
     }),
     UserModule,
     MailerModule,
+    CypherModule.register({
+      algorithm: 'aes-256-ctr',
+      keylen: 32,
+      key: 'f3a6d8e577c5dc4089dfe439e17034be2a522ac510a2317a81be23ea66de46c9',
+      iv: 16,
+    }),
   ],
   providers: [
     AuthService,

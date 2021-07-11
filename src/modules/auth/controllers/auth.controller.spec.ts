@@ -24,7 +24,7 @@
 //         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
 //         ConfigModule,
 //         JwtModule.register({}),
-//         MailerModule.forRoot({
+//         MailerModule.register({
 //           transport: {
 //             host: 'smtp.googlemail.com',
 //           },

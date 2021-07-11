@@ -1,8 +1,7 @@
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AuthService } from 'modules/auth/services/auth.service';
-import { UserDto } from 'modules/user/dto/user.dto';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
@@ -19,17 +18,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
    * @param email
    * @param password
    */
-  async validate(email: string, password: string): Promise<UserDto> {
-    const user = await this.authService.validateUser(email, password);
-
-    if (!user) {
-      // Log error
-      this.logger.log('User not found: ' + email);
-
-      // 404 http response
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
+  async validate(email: string, password: string): Promise<any> {
+    return await this.authService.validateUser(email, password);
   }
 }

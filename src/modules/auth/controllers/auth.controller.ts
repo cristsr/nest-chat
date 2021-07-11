@@ -14,6 +14,7 @@ import { ForgotPasswordDto } from 'modules/user/dto/forgot-password.dto';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
 import { UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
+import { uid } from 'uid/secure';
 
 @Controller('auth')
 export class AuthController {
@@ -47,5 +48,11 @@ export class AuthController {
   @Get('refresh')
   refreshToken(@Request() request) {
     return this.authService.refresh(request.user);
+  }
+
+  @Public()
+  @Get('uid')
+  uidGen() {
+    return uid(64);
   }
 }

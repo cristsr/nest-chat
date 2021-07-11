@@ -7,7 +7,7 @@ export class LoginResponseDto {
   credentials: {
     accessToken: string;
     tokenType: string;
-    expiresIn: string;
+    expiresIn: number;
     refreshToken: string;
   };
 
