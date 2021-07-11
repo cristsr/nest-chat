@@ -1,15 +1,20 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class RecoveryPasswordDto {
   @IsString()
   user: string;
 
-  @IsString()
-  dueDate: string;
+  @IsNumber()
+  expTime: number;
 
-  @IsString()
-  recoveryToken: string;
+  @IsNumber()
+  issuedAt: number;
 
   @IsOptional()
   isCompleted?: boolean;
+}
+
+export class ForgotPasswordDto {
+  @IsEmail()
+  email: string;
 }

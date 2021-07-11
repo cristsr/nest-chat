@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UpdateUserDto } from 'modules/user/dto/update-user.dto';
 import {
   RecoveryPassword,
   RecoveryPasswordDocument,
 } from 'modules/user/entities/recovery-password.entity';
 import { RecoveryPasswordDto } from 'modules/user/dto/recovery-password.dto';
+import { UpdateUserDto } from 'modules/user/dto/user.dto';
 
 @Injectable()
 export class RecoveryPasswordRepository {

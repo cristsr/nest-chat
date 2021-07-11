@@ -6,13 +6,14 @@ import {
   Put,
   Param,
   Delete,
-  Request,
 } from '@nestjs/common';
-import { UpdateUserDto } from 'modules/user/dto/update-user.dto';
-import { CreateUserDto } from 'modules/user/dto/create-user.dto';
 import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
-import { UserDto } from 'modules/user/dto/user.dto';
+import {
+  CreateUserDto,
+  UpdateUserDto,
+  UserDto,
+} from 'modules/user/dto/user.dto';
 
 @Controller('user')
 export class UserController {

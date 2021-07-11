@@ -1,5 +1,5 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { createCipheriv, createDecipheriv, randomBytes, scrypt } from 'crypto';
+import { Inject, Injectable } from '@nestjs/common';
+import { createCipheriv, createDecipheriv, scrypt } from 'crypto';
 import { promisify } from 'util';
 import { CypherConfig } from './cypher.module';
 import { CYPHER_CONFIG } from './constants';
@@ -8,46 +8,47 @@ import { CYPHER_CONFIG } from './constants';
 export class CypherService {
   constructor(@Inject(CYPHER_CONFIG) private cypherConfig: CypherConfig) {}
 
-  async encrypt(textToEncrypt): Promise<string> {
-    const iv = randomBytes(this.cypherConfig.iv);
-    const password = this.cypherConfig.key;
+  async encrypt(textToEncrypt: string, password: string): Promise<string> {
+    const key = await this.genKey(password);
 
-    // The key length is dependent on the algorithm.
-    // In this case for aes256, it is 32 bytes.
-    const key = (await promisify(scrypt)(
-      password,
-      'salt',
-      this.cypherConfig.keylen,
-    )) as Buffer;
-    const cipher = createCipheriv(this.cypherConfig.algorithm, key, iv);
+    const cipher = createCipheriv(
+      this.cypherConfig.algorithm,
+      key,
+      this.cypherConfig.iv,
+    );
 
     const encryptedText = Buffer.concat([
       cipher.update(textToEncrypt),
       cipher.final(),
     ]);
 
-    Logger.log('encripted text ');
-    Logger.log(encryptedText);
-
-    return encryptedText.toString('utf-8');
+    return encryptedText.toString('hex');
   }
 
-  async decrypt(encryptedText: string) {
-    const iv = randomBytes(this.cypherConfig.iv);
-    const password = this.cypherConfig.key;
+  async decrypt(encryptedText: string, password: string) {
+    const key = await this.genKey(password);
+
+    const buffer = Buffer.from(encryptedText, 'hex');
 
     const decipher = createDecipheriv(
       this.cypherConfig.algorithm,
-      password,
-      iv,
+      key,
+      this.cypherConfig.iv,
     );
 
     const decryptedText = Buffer.concat([
-      decipher.update(encryptedText as any),
+      decipher.update(buffer),
       decipher.final(),
     ]);
 
-    Logger.log('decrypted text ');
-    Logger.log(decryptedText);
+    return decryptedText.toString('utf-8');
+  }
+
+  private genKey(password: string): Promise<Buffer> {
+    return promisify(scrypt)(
+      password,
+      'salt',
+      this.cypherConfig.keylen,
+    ) as Promise<Buffer>;
   }
 }

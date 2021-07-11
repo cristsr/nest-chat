@@ -5,8 +5,7 @@ import { CYPHER_CONFIG } from './constants';
 export interface CypherConfig {
   algorithm: string;
   keylen: number;
-  key: string;
-  iv: number;
+  iv: string;
 }
 
 @Module({})
