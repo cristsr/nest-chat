@@ -2,7 +2,6 @@ import {
   BadRequestException,
   CanActivate,
   ExecutionContext,
-  Inject,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -28,11 +27,20 @@ export class RefreshJwtGuard implements CanActivate {
       throw new BadRequestException('Refresh token is required');
     }
 
-    const payload = this.jwt.verify(refreshToken, {
-      secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
-    });
+    let payload;
+
+    try {
+      payload = this.jwt.verify(refreshToken, {
+        secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
+      });
+    } catch (e) {
+      this.logger.log('Refresh token is invalid');
+
+      throw new BadRequestException('Invalid refresh token');
+    }
 
     if (payload) {
+      this.logger.log('Refresh token is valid');
       // set user to request ref
       requestRef.user = {
         id: payload.id,
@@ -44,7 +52,6 @@ export class RefreshJwtGuard implements CanActivate {
       return of(true);
     }
 
-    //
     return of(false);
   }
 }

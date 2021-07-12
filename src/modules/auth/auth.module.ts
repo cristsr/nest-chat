@@ -11,6 +11,7 @@ import { JwtGuard } from './guards/jwt.guard';
 import { MailerModule } from '../../mailer/mailer.module';
 import { CypherModule } from 'utils/cypher/cypher.module';
 import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
+import { ResetPasswordGuard } from 'modules/auth/guards/reset-password.guard';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
     LocalStrategy,
     JwtStrategy,
     RefreshJwtGuard,
+    ResetPasswordGuard,
     {
       // by default each controller uses this guard
       provide: APP_GUARD,

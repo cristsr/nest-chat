@@ -3,9 +3,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  ServiceUnavailableException,
-  UnauthorizedException,
-  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -14,7 +11,6 @@ import { CONFIG } from 'config/config-keys';
 import { JwtResponseDto } from 'modules/auth/dto/jwt-response.dto';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { RecoveryPasswordRepository } from 'modules/user/repositories/recovery-password/recovery-password-repository';
-import * as bcrypt from 'bcrypt';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { MailerService } from '../../../mailer/mailer.service';
@@ -24,7 +20,7 @@ import {
 } from 'modules/user/dto/recovery-password.dto';
 import { CypherService } from 'utils/cypher/cypher.service';
 import { getMethodName } from 'utils/functions';
-import { validateOrReject } from 'class-validator';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -71,53 +67,6 @@ export class AuthService {
 
     return {
       success: true,
-    };
-  }
-
-  /**
-   * validate if user exist and given password is correct
-   * called by passport local strategy
-   * @param email
-   * @param pass
-   */
-  async validateUser(email: string, pass: string): Promise<UserDto> {
-    this.logger.log('Start method execution: ' + getMethodName());
-
-    const user = await this.userService.findByEmail(email);
-
-    if (!user) {
-      this.logger.log('User not found: ' + email);
-
-      // 404 Http response
-      throw new NotFoundException('User not found');
-    }
-
-    // Validate password
-    const passwordMatch = await bcrypt
-      .compare(pass, user.password)
-      .catch((e: Error) => {
-        this.logger.log('Bcrypt error: ' + e.message);
-
-        // 503 Http response
-        throw new ServiceUnavailableException(
-          'At the moment we are having problems with the service',
-        );
-      });
-
-    if (!passwordMatch) {
-      this.logger.log('Invalid password for user: ' + email);
-
-      // 401 Http response
-      throw new UnauthorizedException('Incorrect password');
-    }
-
-    this.logger.log('User validate successfully: ' + user.email);
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      nickname: user.nickname,
     };
   }
 
@@ -217,41 +166,19 @@ export class AuthService {
   /**
    * Validate recovery token sent to user email
    * and save new password
-   * @param token
+   * @param data
    * @param password
    */
   async resetPassword(
-    token: string,
+    data: RecoveryPasswordDto,
     password: string,
   ): Promise<{ success: boolean }> {
-    this.logger.log('Start method execution: ' + getMethodName());
-
-    const str = await this.cypher.decrypt(
-      token,
-      this.config.get(CONFIG.RECOVERY_SECRET_KEY),
-    );
-
-    let data: RecoveryPasswordDto;
-
-    try {
-      data = JSON.parse(str);
-      await validateOrReject(data);
-    } catch (e) {
-      this.logger.log('Invalid token: ' + e.message);
-
-      throw new UnprocessableEntityException('Invalid token');
-    }
+    this.logger.log('Start resetPassword method execution');
 
     const user: UserDocument = await this.userService.findByEmail(data.user);
 
     if (!user) {
       throw new NotFoundException('User not found');
-    }
-
-    const currentDate = new Date().getTime();
-
-    if (currentDate > data.expTime) {
-      throw new UnprocessableEntityException('Your request has expired');
     }
 
     user.password = await bcrypt.hash(

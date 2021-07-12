@@ -6,8 +6,14 @@ import { CurrentUser } from 'modules/auth/decorators/current-user';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { uid } from 'uid/secure';
-import { ForgotPasswordDto } from 'modules/user/dto/recovery-password.dto';
+import {
+  ForgotPasswordDto,
+  RecoveryPasswordDto,
+  ResetPasswordDto,
+} from 'modules/user/dto/recovery-password.dto';
 import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
+import { ResetPasswordGuard } from 'modules/auth/guards/reset-password.guard';
+import { AuthInfo } from 'modules/auth/decorators/auth-info';
 
 @Controller('auth')
 export class AuthController {
@@ -33,12 +39,13 @@ export class AuthController {
   }
 
   @Public()
+  @UseGuards(ResetPasswordGuard)
   @Post('reset-password')
-  async validateRecoveryToken(
-    @Query('token') token: string,
-    @Body('password') password: string,
+  async resetPassword(
+    @AuthInfo() data: RecoveryPasswordDto,
+    @Body() { password }: ResetPasswordDto,
   ) {
-    return this.authService.resetPassword(token, password);
+    return this.authService.resetPassword(data, password);
   }
 
   @Public()
