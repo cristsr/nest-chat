@@ -3,6 +3,11 @@ import { BadRequestException, ExecutionContext } from '@nestjs/common';
 import { Observable } from 'rxjs';
 
 export class LocalGuard extends AuthGuard('local') {
+  /**
+   * Validate if email and password was provided
+   * and call passport local strategy
+   * @param context
+   */
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
