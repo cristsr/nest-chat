@@ -12,7 +12,7 @@ import { JwtResponseDto } from 'modules/auth/dto/jwt-response.dto';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { RecoveryPasswordRepository } from 'modules/user/repositories/recovery-password/recovery-password-repository';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
-import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
+import { JwtDto, LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { MailerService } from '../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
@@ -40,7 +40,7 @@ export class AuthService {
    * @param user
    */
   async register(user: CreateUserDto): Promise<{ success: boolean }> {
-    this.logger.log('Start method execution: ' + getMethodName());
+    this.logger.log('Start register method execution');
 
     if (await this.userService.findByEmail(user.email)) {
       // Log error
@@ -72,52 +72,53 @@ export class AuthService {
 
   /**
    * Called by controller after passport local strategy validation
-   * @param user model created in jwt strategy
+   * @param user created in local strategy
    * @param onlyJwt
    */
   generateJwt(user: UserDto, onlyJwt = false): LoginResponseDto {
-    this.logger.log('Start method execution: ' + getMethodName());
+    this.logger.log('Start generateJwt method execution');
 
-    const accessToken = this.jwtService.sign(user, {
-      secret: this.config.get(CONFIG.JWT_SECRET_KEY),
-      expiresIn: this.config.get(CONFIG.JWT_EXPIRATION_TIME),
-    });
+    const response: LoginResponseDto = {};
 
-    const expiresIn = +this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, -1);
+    const jwtExpiration = this.config.get(CONFIG.JWT_EXPIRATION_TIME);
 
-    if (onlyJwt) {
-      return {
-        credentials: {
-          accessToken,
-          tokenType: 'Bearer',
-          expiresIn,
-        },
-      };
-    }
-
-    const refreshToken = this.jwtService.sign(user, {
-      secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
-    });
+    response.accessToken = {
+      token: this.jwtService.sign(user, {
+        secret: this.config.get(CONFIG.JWT_SECRET_KEY),
+        expiresIn: jwtExpiration,
+      }),
+      tokenType: 'Bearer',
+      expiresIn: jwtExpiration.slice(0, -1),
+    };
 
     this.logger.log('Credentials generated successfully');
 
-    return {
-      credentials: {
-        accessToken,
-        tokenType: 'Bearer',
-        expiresIn,
-        refreshToken,
-      },
-      user,
+    if (onlyJwt) {
+      return response;
+    }
+
+    const refreshJwtExpiration = this.config.get(
+      CONFIG.REFRESH_EXPIRATION_TIME,
+    );
+
+    response.refreshToken = {
+      token: this.jwtService.sign(user, {
+        secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
+      }),
+      expiresIn: refreshJwtExpiration,
     };
+
+    response.user = user;
+
+    return response;
   }
 
   /**
-   * Search user by email and send a email with a token to recovery account
+   * Search user and send an email with a token to recovery account
    * @param user
    */
   async forgotPassword(user: ForgotPasswordDto) {
-    this.logger.log('Start method execution: ' + getMethodName());
+    this.logger.log('Start forgotPassword method execution');
 
     if (!(await this.userService.findByEmail(user.email))) {
       this.logger.log('User not registered: ' + user.email);
@@ -148,7 +149,7 @@ export class AuthService {
 
     const mailerConfig = {
       to: user.email,
-      from: 'test@applacarta.com',
+      from: 'test@test.com',
       subject: 'Recovery password request NEST CHAT ✔',
       text: 'http://localhost:4200/reset-password?token=' + token,
     };
@@ -191,27 +192,5 @@ export class AuthService {
     return {
       success: true,
     };
-  }
-
-  /**
-   * Refresh token
-   * @param user
-   */
-  async refresh(user: any) {
-    this.logger.log('Start method execution: ' + getMethodName());
-
-    const payload = {
-      id: user.id,
-      username: user.name,
-      email: user.email,
-    };
-
-    const jwtResponse: JwtResponseDto = {
-      accessToken: this.jwtService.sign(payload),
-      tokenType: 'Bearer',
-      expiresIn: +this.config.get(CONFIG.JWT_EXPIRATION_TIME).slice(0, 1),
-    };
-
-    return jwtResponse;
   }
 }

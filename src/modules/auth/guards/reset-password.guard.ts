@@ -20,6 +20,10 @@ export class ResetPasswordGuard implements CanActivate {
 
   constructor(private config: ConfigService, private cypher: CypherService) {}
 
+  /**
+   * Decode and validate recovery token structure
+   * @param context
+   */
   async canActivate(context: ExecutionContext): Promise<boolean> {
     this.logger.log('start guard execution: ' + ResetPasswordGuard.name);
     const requestRef = context.switchToHttp().getRequest<Request>();
@@ -31,7 +35,7 @@ export class ResetPasswordGuard implements CanActivate {
     }
 
     //decode token to JSON
-    const payload = await this.cypher.decrypt(
+    const payload: string = await this.cypher.decrypt(
       token,
       this.config.get(CONFIG.RECOVERY_SECRET_KEY),
     );

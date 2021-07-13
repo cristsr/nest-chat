@@ -4,12 +4,14 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
+  UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { Observable, of } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CONFIG } from 'config/config-keys';
 import { UserDto } from 'modules/user/dto/user.dto';
+import { Request } from 'express';
 
 @Injectable()
 export class RefreshJwtGuard implements CanActivate {
@@ -17,41 +19,46 @@ export class RefreshJwtGuard implements CanActivate {
 
   constructor(private jwt: JwtService, private config: ConfigService) {}
 
-  canActivate(context: ExecutionContext): Observable<boolean> {
-    const ctx = context.switchToHttp();
-    const requestRef = ctx.getRequest();
+  /**
+   * Decode and validate refresh token
+   * @param context
+   */
+  canActivate(context: ExecutionContext): boolean {
+    const requestRef = context.switchToHttp().getRequest<Request>();
 
-    const refreshToken = requestRef.headers.refresh;
+    const refreshToken = requestRef.headers.refresh as string;
 
     if (!refreshToken) {
       throw new BadRequestException('Refresh token is required');
     }
 
-    let payload;
+    let payload: any;
 
     try {
+      // decode and verify refresh token
       payload = this.jwt.verify(refreshToken, {
         secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
       });
     } catch (e) {
       this.logger.log('Refresh token is invalid');
 
-      throw new BadRequestException('Invalid refresh token');
+      throw new UnprocessableEntityException('Invalid refresh token');
     }
 
-    if (payload) {
-      this.logger.log('Refresh token is valid');
-      // set user to request ref
-      requestRef.user = {
-        id: payload.id,
-        email: payload.email,
-        name: payload.name,
-        nickname: payload.nickname,
-      } as UserDto;
-
-      return of(true);
+    if (!payload) {
+      throw new UnauthorizedException('Token verification failure');
     }
 
-    return of(false);
+    this.logger.log('Refresh token is valid');
+
+    // set user to request ref
+    requestRef.user = {
+      id: payload.id,
+      email: payload.email,
+      name: payload.name,
+      nickname: payload.nickname,
+    } as UserDto;
+
+    return true;
   }
 }

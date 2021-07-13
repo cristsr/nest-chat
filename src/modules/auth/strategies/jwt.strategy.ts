@@ -18,6 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   /**
    * Callback used by passport before call all protected controller
    * and it returns a model with information signed in jwt
+   * request.user object is populated with object return
    * @param payload
    */
   validate(payload: any): UserDto {

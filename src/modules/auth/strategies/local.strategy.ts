@@ -20,7 +20,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   }
 
   /**
-   * Callback used by passport to validate if user exist
+   * Callback used by passport to validate user credentials
    * @param email
    * @param password
    */

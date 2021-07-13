@@ -1,5 +1,12 @@
-import { Controller, Get, Post, UseGuards, Body, Query } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import {
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Body,
+  Query,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { AuthService } from 'modules/auth/services/auth.service';
 import { Public } from 'modules/auth/decorators/public';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
@@ -14,13 +21,14 @@ import {
 import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
 import { ResetPasswordGuard } from 'modules/auth/guards/reset-password.guard';
 import { AuthInfo } from 'modules/auth/decorators/auth-info';
+import { LocalGuard } from 'modules/auth/guards/local.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(LocalGuard)
   @Post('login')
   login(@CurrentUser() user: UserDto): LoginResponseDto {
     return this.authService.generateJwt(user);
@@ -57,7 +65,7 @@ export class AuthController {
 
   @Public()
   @Get('uid')
-  uidGen(@Query('length') length) {
+  uidGen(@Query('length', ParseIntPipe) length: number) {
     if (length) {
       return uid(+length);
     }

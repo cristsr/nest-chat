@@ -8,6 +8,11 @@ import { CYPHER_CONFIG } from './constants';
 export class CypherService {
   constructor(@Inject(CYPHER_CONFIG) private cypherConfig: CypherConfig) {}
 
+  /**
+   * Encrypt text with provided password and return hex string
+   * @param textToEncrypt
+   * @param password
+   */
   async encrypt(textToEncrypt: string, password: string): Promise<string> {
     const key = await this.genKey(password);
 
@@ -25,6 +30,11 @@ export class CypherService {
     return encryptedText.toString('hex');
   }
 
+  /**
+   * Decrypt hex string with provided password and return utf8 string
+   * @param encryptedText
+   * @param password
+   */
   async decrypt(encryptedText: string, password: string) {
     const key = await this.genKey(password);
 
@@ -44,6 +54,11 @@ export class CypherService {
     return decryptedText.toString('utf-8');
   }
 
+  /**
+   * Generate key
+   * @param password
+   * @private
+   */
   private genKey(password: string): Promise<Buffer> {
     return promisify(scrypt)(
       password,

@@ -85,8 +85,8 @@
 //     });
 //   });
 //
-//   it('POST /generateJwt 200 success', async () => {
-//     jest.spyOn(authService, 'generateJwt').mockImplementation(() =>
+//   it('POST /login 200 success', async () => {
+//     jest.spyOn(authService, 'login').mockImplementation(() =>
 //       Promise.resolve({
 //         credentials: {
 //           accessToken: 'token test',
@@ -102,7 +102,7 @@
 //       }),
 //     );
 //
-//     const result = await controller.generateJwt({
+//     const result = await controller.login({
 //       username: 'test',
 //       password: 'test',
 //     });

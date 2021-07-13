@@ -1,14 +1,32 @@
 import { UserDto } from 'modules/user/dto/user.dto';
-import { IsDefined, ValidateNested } from 'class-validator';
+import {
+  IsDefined,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+
+export class JwtDto {
+  @IsString()
+  token: string;
+
+  @IsString()
+  tokenType?: string;
+
+  @IsString()
+  expiresIn?: number;
+}
 
 export class LoginResponseDto {
   @IsDefined()
   @ValidateNested()
-  credentials: {
-    accessToken: string;
-    tokenType: string;
-    expiresIn: number;
-    refreshToken?: string;
-  };
+  accessToken?: JwtDto;
+
+  @IsDefined()
+  @ValidateNested()
+  refreshToken?: JwtDto;
+
+  @IsOptional()
+  @ValidateNested()
   user?: UserDto;
 }
