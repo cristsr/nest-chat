@@ -9,7 +9,6 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import { CONFIG } from 'config/config-keys';
 import { UserDocument } from 'modules/user/entities/user.entity';
-import { RecoveryPasswordRepository } from 'modules/user/repositories/recovery-password/recovery-password-repository';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { MailerService } from '../../../mailer/mailer.service';
@@ -27,7 +26,6 @@ export class AuthService {
   constructor(
     private config: ConfigService,
     private userRepository: UserRepository,
-    private recoveryPasswordService: RecoveryPasswordRepository,
     private jwtService: JwtService,
     private mailerService: MailerService,
     private cypher: CypherService,
