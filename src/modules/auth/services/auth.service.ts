@@ -8,18 +8,16 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import { CONFIG } from 'config/config-keys';
-import { JwtResponseDto } from 'modules/auth/dto/jwt-response.dto';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { RecoveryPasswordRepository } from 'modules/user/repositories/recovery-password/recovery-password-repository';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
-import { JwtDto, LoginResponseDto } from 'modules/auth/dto/login-response.dto';
+import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
 import { MailerService } from '../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
 } from 'modules/user/dto/recovery-password.dto';
 import { CypherService } from 'utils/cypher/cypher.service';
-import { getMethodName } from 'utils/functions';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
