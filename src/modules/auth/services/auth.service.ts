@@ -26,7 +26,7 @@ export class AuthService {
 
   constructor(
     private config: ConfigService,
-    private userService: UserRepository,
+    private userRepository: UserRepository,
     private recoveryPasswordService: RecoveryPasswordRepository,
     private jwtService: JwtService,
     private mailerService: MailerService,
@@ -40,7 +40,7 @@ export class AuthService {
   async register(user: CreateUserDto): Promise<{ success: boolean }> {
     this.logger.log('Start register method execution');
 
-    if (await this.userService.findByEmail(user.email)) {
+    if (await this.userRepository.findByEmail(user.email)) {
       // Log error
       this.logger.log('User are registered: ' + user.email);
 
@@ -55,7 +55,7 @@ export class AuthService {
 
     // const refreshSecret = await this.cypher.encrypt(uid(64));
 
-    await this.userService.create({
+    await this.userRepository.create({
       ...user,
       password,
     });
@@ -118,7 +118,7 @@ export class AuthService {
   async forgotPassword(user: ForgotPasswordDto) {
     this.logger.log('Start forgotPassword method execution');
 
-    if (!(await this.userService.findByEmail(user.email))) {
+    if (!(await this.userRepository.findByEmail(user.email))) {
       this.logger.log('User not registered: ' + user.email);
 
       throw new NotFoundException('The given email is not registered');
@@ -174,7 +174,7 @@ export class AuthService {
   ): Promise<{ success: boolean }> {
     this.logger.log('Start resetPassword method execution');
 
-    const user: UserDocument = await this.userService.findByEmail(data.user);
+    const user: UserDocument = await this.userRepository.findByEmail(data.user);
 
     if (!user) {
       throw new NotFoundException('User not found');
