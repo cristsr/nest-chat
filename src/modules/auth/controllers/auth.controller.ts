@@ -11,7 +11,7 @@ import { AuthService } from 'modules/auth/services/auth.service';
 import { Public } from 'modules/auth/decorators/public';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
-import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
+import { LoginDto } from 'modules/auth/dto/login.dto';
 import { uid } from 'uid/secure';
 import {
   ForgotPasswordDto,
@@ -30,7 +30,7 @@ export class AuthController {
   @Public()
   @UseGuards(LocalGuard)
   @Post('login')
-  login(@CurrentUser() user: UserDto): LoginResponseDto {
+  login(@CurrentUser() user: UserDto): LoginDto {
     return this.authService.generateJwt(user);
   }
 

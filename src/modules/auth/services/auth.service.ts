@@ -10,7 +10,7 @@ import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import { CONFIG } from 'config/config-keys';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
-import { LoginResponseDto } from 'modules/auth/dto/login-response.dto';
+import { LoginDto } from 'modules/auth/dto/login.dto';
 import { MailerService } from '../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
@@ -71,10 +71,10 @@ export class AuthService {
    * @param user created in local strategy
    * @param onlyJwt
    */
-  generateJwt(user: UserDto, onlyJwt = false): LoginResponseDto {
+  generateJwt(user: UserDto, onlyJwt = false): LoginDto {
     this.logger.log('Start generateJwt method execution');
 
-    const response: LoginResponseDto = {};
+    const response: LoginDto = {};
 
     const jwtExpiration = this.config.get(CONFIG.JWT_EXPIRATION_TIME);
 

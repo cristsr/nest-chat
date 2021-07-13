@@ -17,7 +17,7 @@ export class JwtDto {
   expiresIn?: number;
 }
 
-export class LoginResponseDto {
+export class LoginDto {
   @IsDefined()
   @ValidateNested()
   accessToken?: JwtDto;
