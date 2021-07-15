@@ -25,12 +25,12 @@ export class ResetPasswordGuard implements CanActivate {
    * @param context
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    this.logger.log('start guard execution: ' + ResetPasswordGuard.name);
     const requestRef = context.switchToHttp().getRequest<Request>();
 
     const token = requestRef.headers.token as string;
 
     if (!token) {
+      this.logger.error('Token not provided');
       throw new BadRequestException('Token not provided');
     }
 
@@ -49,7 +49,7 @@ export class ResetPasswordGuard implements CanActivate {
       // Validate object  structure
       await validateOrReject(data);
     } catch (e) {
-      this.logger.log('Invalid token: ' + e.message);
+      this.logger.error('Invalid token: ' + e.message);
 
       throw new UnprocessableEntityException('Invalid token');
     }
@@ -57,6 +57,7 @@ export class ResetPasswordGuard implements CanActivate {
     const currentDate = new Date().getTime();
 
     if (currentDate > data.expTime) {
+      this.logger.error('Recovery token has expired');
       throw new UnauthorizedException('Your request has expired');
     }
 

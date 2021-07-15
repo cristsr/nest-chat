@@ -36,11 +36,9 @@ export class AuthService {
    * @param user
    */
   async register(user: CreateUserDto): Promise<{ success: boolean }> {
-    this.logger.log('Start register method execution');
-
     if (await this.userRepository.findByEmail(user.email)) {
       // Log error
-      this.logger.log('User are registered: ' + user.email);
+      this.logger.error('User are registered: ' + user.email);
 
       // 400 Http response
       throw new BadRequestException('The given email is already registered');
@@ -72,8 +70,6 @@ export class AuthService {
    * @param onlyJwt
    */
   generateJwt(user: UserDto, onlyJwt = false): LoginDto {
-    this.logger.log('Start generateJwt method execution');
-
     const response: LoginDto = {};
 
     const jwtExpiration = this.config.get(CONFIG.JWT_EXPIRATION_TIME);
@@ -114,10 +110,8 @@ export class AuthService {
    * @param user
    */
   async forgotPassword(user: ForgotPasswordDto) {
-    this.logger.log('Start forgotPassword method execution');
-
     if (!(await this.userRepository.findByEmail(user.email))) {
-      this.logger.log('User not registered: ' + user.email);
+      this.logger.error('User not registered: ' + user.email);
 
       throw new NotFoundException('The given email is not registered');
     }
@@ -141,8 +135,6 @@ export class AuthService {
       this.config.get(CONFIG.RECOVERY_SECRET_KEY),
     );
 
-    this.logger.log('Recovery token generated successfully ' + user.email);
-
     const mailerConfig = {
       to: user.email,
       from: 'test@test.com',
@@ -153,7 +145,7 @@ export class AuthService {
     // Send recovery password mail
     await this.mailerService.sendMail(mailerConfig);
 
-    this.logger.log('Recovery password mail was sent: ' + user.email);
+    this.logger.log('Recovery password mail was sent to ' + user.email);
 
     return {
       success: true,
@@ -170,11 +162,10 @@ export class AuthService {
     data: RecoveryPasswordDto,
     password: string,
   ): Promise<{ success: boolean }> {
-    this.logger.log('Start resetPassword method execution');
-
     const user: UserDocument = await this.userRepository.findByEmail(data.user);
 
     if (!user) {
+      this.logger.error('User not found: ' + user.email);
       throw new NotFoundException('User not found');
     }
 
@@ -184,6 +175,8 @@ export class AuthService {
     );
 
     await user.save();
+
+    this.logger.log('Password update successfully to user ' + user.email);
 
     return {
       success: true,

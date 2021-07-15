@@ -13,7 +13,7 @@ import { UserDto } from 'modules/user/dto/user.dto';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
-  private readonly logger = new Logger('LocalStrategy');
+  private readonly logger = new Logger(LocalStrategy.name);
 
   constructor(private userRepository: UserRepository) {
     super({ usernameField: 'email' });
@@ -25,10 +25,12 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
    * @param password
    */
   async validate(email: string, password: string): Promise<UserDto> {
+    this.logger.log('Start validate method execution');
+
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      this.logger.log('User not found: ' + email);
+      this.logger.error('User not found: ' + email);
 
       // 404 Http response
       throw new NotFoundException('User not found');
@@ -38,7 +40,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const passwordMatch = await bcrypt
       .compare(password, user.password)
       .catch((e: Error) => {
-        this.logger.log('Bcrypt error: ' + e.message);
+        this.logger.error('Bcrypt error: ' + e.message);
 
         // 503 Http response
         throw new ServiceUnavailableException(
@@ -47,7 +49,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       });
 
     if (!passwordMatch) {
-      this.logger.log('Invalid password for user: ' + email);
+      this.logger.error('Invalid password for user: ' + email);
 
       // 401 Http response
       throw new UnauthorizedException('Incorrect password');

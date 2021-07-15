@@ -6,6 +6,7 @@ import {
   Body,
   Query,
   ParseIntPipe,
+  Logger,
 } from '@nestjs/common';
 import { AuthService } from 'modules/auth/services/auth.service';
 import { Public } from 'modules/auth/decorators/public';
@@ -25,6 +26,8 @@ import { LocalGuard } from 'modules/auth/guards/local.guard';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(private readonly authService: AuthService) {}
 
   @Public()

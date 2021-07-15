@@ -1,12 +1,14 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CONFIG } from 'config/config-keys';
 import { UserDto } from 'modules/user/dto/user.dto';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(private configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -22,6 +24,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @return UserDto request.user is populated with object return
    */
   validate(payload: any): UserDto {
+    this.logger.log('JWT validation successfully');
+
     return {
       id: payload.id,
       email: payload.email,

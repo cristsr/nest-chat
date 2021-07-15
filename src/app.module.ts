@@ -8,6 +8,7 @@ import { AuthModule } from 'modules/auth/auth.module';
 import { UserModule } from 'modules/user/user.module';
 import { CONFIG } from 'config/config-keys';
 import { MailerModule } from './mailer/mailer.module';
+import { MiddlewareModule } from './core/middleware/middlewareModule';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MailerModule } from './mailer/mailer.module';
     AuthModule,
     UserModule,
     MailerModule,
+    MiddlewareModule,
   ],
   controllers: [AppController],
   providers: [AppService, ChatGateway],

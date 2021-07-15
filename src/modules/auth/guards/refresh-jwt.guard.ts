@@ -29,6 +29,7 @@ export class RefreshJwtGuard implements CanActivate {
     const refreshToken = requestRef.headers.refresh as string;
 
     if (!refreshToken) {
+      this.logger.error('Refresh token not provided');
       throw new BadRequestException('Refresh token is required');
     }
 
@@ -40,12 +41,13 @@ export class RefreshJwtGuard implements CanActivate {
         secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
       });
     } catch (e) {
-      this.logger.log('Refresh token is invalid');
+      this.logger.error('Refresh token is invalid');
 
       throw new UnprocessableEntityException('Invalid refresh token');
     }
 
     if (!payload) {
+      this.logger.error('Token verification failure');
       throw new UnauthorizedException('Token verification failure');
     }
 
