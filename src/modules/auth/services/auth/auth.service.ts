@@ -11,13 +11,14 @@ import { CONFIG } from 'config/config-keys';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginDto } from 'modules/auth/dto/login.dto';
-import { MailerService } from '../../../mailer/mailer.service';
+import { MailerService } from '../../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
 } from 'modules/user/dto/recovery-password.dto';
 import { CypherService } from 'utils/cypher/cypher.service';
 import * as bcrypt from 'bcrypt';
+import { TokenService } from 'modules/auth/services/token/token.service';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
     private jwtService: JwtService,
     private mailerService: MailerService,
     private cypher: CypherService,
+    private token: TokenService,
   ) {}
 
   /**
@@ -142,8 +144,10 @@ export class AuthService {
       text: 'http://localhost:4200/reset-password?token=' + token,
     };
 
+    this.token.recovery(user.email);
+
     // Send recovery password mail
-    await this.mailerService.sendMail(mailerConfig);
+    // await this.mailerService.sendMail(mailerConfig);
 
     this.logger.log('Recovery password mail was sent to ' + user.email);
 
@@ -168,6 +172,8 @@ export class AuthService {
       this.logger.error('User not found: ' + user.email);
       throw new NotFoundException('User not found');
     }
+
+    this.token.recovery(user.email);
 
     user.password = await bcrypt.hash(
       password,
