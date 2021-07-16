@@ -29,7 +29,7 @@ export class JwtGuard extends AuthGuard('jwt') {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    this.logger.log('Context ', context.getType());
+    this.logger.log('Context ' + context.getType());
 
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
