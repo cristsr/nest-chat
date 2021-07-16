@@ -9,23 +9,11 @@ import { PassportModule } from '@nestjs/passport';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './guards/jwt.guard';
 import { MailerModule } from '../../mailer/mailer.module';
-import { CypherModule } from 'utils/cypher/cypher.module';
 import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
 import { ResetPasswordGuard } from 'modules/auth/guards/reset-password.guard';
-import { TokenService } from './services/token/token.service';
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.register({}),
-    UserModule,
-    MailerModule,
-    CypherModule.register({
-      algorithm: 'aes-256-ctr',
-      keylen: 32,
-      iv: '3656e6060f1fa937',
-    }),
-  ],
+  imports: [PassportModule, JwtModule.register({}), UserModule, MailerModule],
   providers: [
     AuthService,
     LocalStrategy,
@@ -37,7 +25,6 @@ import { TokenService } from './services/token/token.service';
       provide: APP_GUARD,
       useClass: JwtGuard,
     },
-    TokenService,
   ],
   exports: [AuthService],
   controllers: [AuthController],

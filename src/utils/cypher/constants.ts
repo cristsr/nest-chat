@@ -1,1 +1,0 @@
-export const CYPHER_CONFIG = 'CYPHER_CONFIG';

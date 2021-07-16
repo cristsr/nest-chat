@@ -26,8 +26,6 @@ import { LocalGuard } from 'modules/auth/guards/local.guard';
 
 @Controller('auth')
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(private readonly authService: AuthService) {}
 
   @Public()

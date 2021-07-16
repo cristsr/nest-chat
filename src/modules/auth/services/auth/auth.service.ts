@@ -16,9 +16,7 @@ import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
 } from 'modules/user/dto/recovery-password.dto';
-import { CypherService } from 'utils/cypher/cypher.service';
 import * as bcrypt from 'bcrypt';
-import { TokenService } from 'modules/auth/services/token/token.service';
 
 @Injectable()
 export class AuthService {
@@ -29,8 +27,6 @@ export class AuthService {
     private userRepository: UserRepository,
     private jwtService: JwtService,
     private mailerService: MailerService,
-    private cypher: CypherService,
-    private token: TokenService,
   ) {}
 
   /**
@@ -87,23 +83,25 @@ export class AuthService {
 
     this.logger.log('Credentials generated successfully');
 
+    // return accessToken
     if (onlyJwt) {
       return response;
     }
 
-    const refreshJwtExpiration = this.config.get(
-      CONFIG.REFRESH_EXPIRATION_TIME,
-    );
+    // const refreshJwtExpiration = this.config.get(
+    //   CONFIG.REFRESH_EXPIRATION_TIME,
+    // );
 
     response.refreshToken = {
       token: this.jwtService.sign(user, {
         secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
       }),
-      expiresIn: refreshJwtExpiration,
+      // expiresIn: refreshJwtExpiration,
     };
 
     response.user = user;
 
+    // Return access token and
     return response;
   }
 
@@ -114,28 +112,22 @@ export class AuthService {
   async forgotPassword(user: ForgotPasswordDto) {
     if (!(await this.userRepository.findByEmail(user.email))) {
       this.logger.error('User not registered: ' + user.email);
-
       throw new NotFoundException('The given email is not registered');
     }
 
-    const recoveryExpSeconds = +this.config
-      .get(CONFIG.RECOVERY_EXPIRATION_TIME)
-      .slice(0, -1);
-
-    const issuedAt = new Date().getTime();
-
-    const expTime = new Date(issuedAt + recoveryExpSeconds * 1000).getTime();
-
-    const payload: RecoveryPasswordDto = {
-      user: user.email,
-      expTime,
-      issuedAt,
+    const payload = {
+      email: user.email,
     };
 
-    const token = await this.cypher.encrypt(
-      JSON.stringify(payload),
-      this.config.get(CONFIG.RECOVERY_SECRET_KEY),
-    );
+    const token: string = await this.jwtService
+      .signAsync(payload, {
+        secret: this.config.get(CONFIG.RECOVERY_SECRET_KEY),
+        expiresIn: this.config.get(CONFIG.RECOVERY_EXPIRATION_TIME),
+      })
+      .catch((e) => {
+        this.logger.log(e.message);
+        throw new BadRequestException(e.message);
+      });
 
     const mailerConfig = {
       to: user.email,
@@ -144,10 +136,8 @@ export class AuthService {
       text: 'http://localhost:4200/reset-password?token=' + token,
     };
 
-    this.token.recovery(user.email);
-
     // Send recovery password mail
-    // await this.mailerService.sendMail(mailerConfig);
+    await this.mailerService.sendMail(mailerConfig);
 
     this.logger.log('Recovery password mail was sent to ' + user.email);
 
@@ -172,8 +162,6 @@ export class AuthService {
       this.logger.error('User not found: ' + user.email);
       throw new NotFoundException('User not found');
     }
-
-    this.token.recovery(user.email);
 
     user.password = await bcrypt.hash(
       password,

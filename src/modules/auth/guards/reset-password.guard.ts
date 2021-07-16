@@ -4,21 +4,21 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
-  UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CypherService } from 'utils/cypher/cypher.service';
 import { CONFIG } from 'config/config-keys';
 import { RecoveryPasswordDto } from 'modules/user/dto/recovery-password.dto';
 import { validateOrReject } from 'class-validator';
 import { Request } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class ResetPasswordGuard implements CanActivate {
   private readonly logger = new Logger(ResetPasswordGuard.name);
 
-  constructor(private config: ConfigService, private cypher: CypherService) {}
+  constructor(private config: ConfigService, private jwtService: JwtService) {}
 
   /**
    * Decode and validate recovery token structure
@@ -34,36 +34,30 @@ export class ResetPasswordGuard implements CanActivate {
       throw new BadRequestException('Token not provided');
     }
 
-    //decode token to JSON
-    const payload: string = await this.cypher.decrypt(
-      token,
-      this.config.get(CONFIG.RECOVERY_SECRET_KEY),
+    const secret = this.config.get(CONFIG.RECOVERY_SECRET_KEY);
+
+    //validate token and set type
+    const payload = await this.jwtService
+      .verifyAsync(token, { secret })
+      .catch((e) => {
+        this.logger.error('Recovery token error: ' + e.message);
+        throw new UnprocessableEntityException(e.message);
+      });
+
+    // Structure validation
+    await validateOrReject(plainToClass(RecoveryPasswordDto, payload)).catch(
+      () => {
+        this.logger.log('Invalid payload structure');
+        throw new UnprocessableEntityException('Invalid payload structure');
+      },
     );
 
-    let data: RecoveryPasswordDto;
+    this.logger.log('Recovery token is valid');
 
-    try {
-      // JSON to object
-      data = JSON.parse(payload);
+    // All validations successfully then populate authInfo
+    requestRef.authInfo = payload;
 
-      // Validate object  structure
-      await validateOrReject(data);
-    } catch (e) {
-      this.logger.error('Invalid token: ' + e.message);
-
-      throw new UnprocessableEntityException('Invalid token');
-    }
-
-    const currentDate = new Date().getTime();
-
-    if (currentDate > data.expTime) {
-      this.logger.error('Recovery token has expired');
-      throw new UnauthorizedException('Your request has expired');
-    }
-
-    // populate auth info
-    requestRef.authInfo = data;
-
+    // Allows continuing with the flow
     return true;
   }
 }
