@@ -18,7 +18,7 @@ import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
   ResetPasswordDto,
-} from 'modules/user/dto/recovery-password.dto';
+} from 'modules/auth/dto/recovery-password.dto';
 import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
 import { ResetPasswordGuard } from 'modules/auth/guards/reset-password.guard';
 import { AuthInfo } from 'modules/auth/decorators/auth-info';

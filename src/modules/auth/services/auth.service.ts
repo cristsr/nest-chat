@@ -15,7 +15,7 @@ import { MailerService } from '../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
-} from 'modules/user/dto/recovery-password.dto';
+} from 'modules/auth/dto/recovery-password.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()

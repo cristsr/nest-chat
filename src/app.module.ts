@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ChatGateway } from './chat.gateway';
 import { DatabaseModule } from 'database/database.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { AuthModule } from 'modules/auth/auth.module';
-import { UserModule } from 'modules/user/user.module';
 import { CONFIG } from 'config/config-keys';
 import { MailerModule } from './mailer/mailer.module';
 import { MiddlewareModule } from './core/middleware/middlewareModule';
+import { AuthModule } from 'modules/auth/auth.module';
+import { UserModule } from 'modules/user/user.module';
+import { ChatModule } from 'modules/chat/chat.module';
 
 @Module({
   imports: [
@@ -18,9 +16,10 @@ import { MiddlewareModule } from './core/middleware/middlewareModule';
     UserModule,
     MailerModule,
     MiddlewareModule,
+    ChatModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, ChatGateway],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {
   // app port

@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CONFIG } from 'config/config-keys';
-import { RecoveryPasswordDto } from 'modules/user/dto/recovery-password.dto';
+import { RecoveryPasswordDto } from 'modules/auth/dto/recovery-password.dto';
 import { validateOrReject } from 'class-validator';
 import { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
