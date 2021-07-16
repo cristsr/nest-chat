@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   Injectable,
   Logger,
+  UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -31,7 +32,7 @@ export class ResetPasswordGuard implements CanActivate {
 
     if (!token) {
       this.logger.error('Token not provided');
-      throw new BadRequestException('Token not provided');
+      throw new UnauthorizedException('Token not provided');
     }
 
     const secret = this.config.get(CONFIG.RECOVERY_SECRET_KEY);

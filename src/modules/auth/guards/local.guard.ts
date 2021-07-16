@@ -1,5 +1,9 @@
 import { AuthGuard } from '@nestjs/passport';
-import { BadRequestException, ExecutionContext, Logger } from '@nestjs/common';
+import {
+  ExecutionContext,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 
 export class LocalGuard extends AuthGuard('local') {
@@ -17,12 +21,12 @@ export class LocalGuard extends AuthGuard('local') {
 
     if (!body.email) {
       this.logger.error('Email not provided');
-      throw new BadRequestException('Email not provided');
+      throw new UnauthorizedException('Email not provided');
     }
 
     if (!body.password) {
       this.logger.error('Password not provided');
-      throw new BadRequestException('Password not provided');
+      throw new UnauthorizedException('Password not provided');
     }
 
     this.logger.log('Credentials validation successfully');

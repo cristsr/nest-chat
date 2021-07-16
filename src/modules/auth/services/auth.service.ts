@@ -11,7 +11,7 @@ import { CONFIG } from 'config/config-keys';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginDto } from 'modules/auth/dto/login.dto';
-import { MailerService } from '../../../../mailer/mailer.service';
+import { MailerService } from '../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
