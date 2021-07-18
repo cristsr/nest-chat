@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -7,19 +6,17 @@ import {
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { CONFIG } from 'config/config-keys';
 import { UserDto } from 'modules/user/dto/user.dto';
 import { Request } from 'express';
 import { plainToClass } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
+import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
 
 @Injectable()
 export class RefreshJwtGuard implements CanActivate {
   private readonly logger = new Logger(RefreshJwtGuard.name);
 
-  constructor(private jwt: JwtService, private config: ConfigService) {}
+  constructor(private authJwt: AuthJwtService) {}
 
   /**
    * Decode and validate refresh token
@@ -35,10 +32,8 @@ export class RefreshJwtGuard implements CanActivate {
       throw new UnauthorizedException('Refresh token is required');
     }
 
-    const secret = this.config.get(CONFIG.REFRESH_SECRET_KEY);
-
-    const payload = await this.jwt
-      .verifyAsync(refreshToken, { secret })
+    const payload = await this.authJwt
+      .verifyRefresh<UserDto>(refreshToken)
       .catch(() => {
         this.logger.error('Invalid refresh token');
         throw new UnprocessableEntityException('Invalid refresh token');

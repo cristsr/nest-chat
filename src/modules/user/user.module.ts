@@ -3,8 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './entities/user.entity';
 import { UserController } from './controllers/user.controller';
 import { UserRepository } from './repositories/user/user.repository';
-import { UserGateway } from 'modules/user/gateways/user.gateway';
-import { Sockets } from 'modules/user/providers/sockets';
 import { RecoveryPasswordRepository } from './repositories/recovery-password/recovery-password-repository';
 import {
   RecoveryPassword,
@@ -19,7 +17,7 @@ import {
     ]),
   ],
   controllers: [UserController],
-  providers: [UserRepository, UserGateway, Sockets, RecoveryPasswordRepository],
+  providers: [UserRepository, RecoveryPasswordRepository],
   exports: [UserRepository, RecoveryPasswordRepository],
 })
 export class UserModule {}

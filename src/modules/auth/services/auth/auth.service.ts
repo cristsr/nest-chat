@@ -5,18 +5,18 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import { CONFIG } from 'config/config-keys';
 import { UserDocument } from 'modules/user/entities/user.entity';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
 import { LoginDto } from 'modules/auth/dto/login.dto';
-import { MailerService } from '../../../mailer/mailer.service';
+import { MailerService } from '../../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
 } from 'modules/auth/dto/recovery-password.dto';
 import * as bcrypt from 'bcrypt';
+import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +25,7 @@ export class AuthService {
   constructor(
     private config: ConfigService,
     private userRepository: UserRepository,
-    private jwtService: JwtService,
+    private authJwt: AuthJwtService,
     private mailerService: MailerService,
   ) {}
 
@@ -67,19 +67,14 @@ export class AuthService {
    * @param user created in local strategy
    * @param onlyJwt
    */
-  generateJwt(user: UserDto, onlyJwt = false): LoginDto {
+  async generateJwt(user: UserDto, onlyJwt = false): Promise<LoginDto> {
     const response: LoginDto = {};
 
-    const jwtExpiration = this.config.get(CONFIG.JWT_EXPIRATION_TIME);
-
-    response.accessToken = {
-      token: this.jwtService.sign(user, {
-        secret: this.config.get(CONFIG.JWT_SECRET_KEY),
-        expiresIn: jwtExpiration,
-      }),
-      tokenType: 'Bearer',
-      expiresIn: jwtExpiration.slice(0, -1),
-    };
+    // Generate access jwt
+    response.accessToken = await this.authJwt.signAccess(user).catch((e) => {
+      this.logger.log(e.message);
+      throw new BadRequestException(e.message);
+    });
 
     this.logger.log('Credentials generated successfully');
 
@@ -88,20 +83,16 @@ export class AuthService {
       return response;
     }
 
-    // const refreshJwtExpiration = this.config.get(
-    //   CONFIG.REFRESH_EXPIRATION_TIME,
-    // );
+    // generate refresh jwt
+    response.refreshToken = await this.authJwt.signRefresh(user).catch((e) => {
+      this.logger.log(e.message);
+      throw new BadRequestException(e.message);
+    });
 
-    response.refreshToken = {
-      token: this.jwtService.sign(user, {
-        secret: this.config.get(CONFIG.REFRESH_SECRET_KEY),
-      }),
-      // expiresIn: refreshJwtExpiration,
-    };
-
+    // populate with user profile
     response.user = user;
 
-    // Return access token and
+    // Return Login response
     return response;
   }
 
@@ -115,25 +106,20 @@ export class AuthService {
       throw new NotFoundException('The given email is not registered');
     }
 
-    const payload = {
-      email: user.email,
+    const payload: RecoveryPasswordDto = {
+      user: user.email,
     };
 
-    const token: string = await this.jwtService
-      .signAsync(payload, {
-        secret: this.config.get(CONFIG.RECOVERY_SECRET_KEY),
-        expiresIn: this.config.get(CONFIG.RECOVERY_EXPIRATION_TIME),
-      })
-      .catch((e) => {
-        this.logger.log(e.message);
-        throw new BadRequestException(e.message);
-      });
+    const jwtDto = await this.authJwt.signRecovery(payload).catch((e) => {
+      this.logger.log(e.message);
+      throw new BadRequestException(e.message);
+    });
 
     const mailerConfig = {
       to: user.email,
       from: 'test@test.com',
       subject: 'Recovery password request NEST CHAT ✔',
-      text: 'http://localhost:4200/reset-password?token=' + token,
+      text: 'http://localhost:4200/reset-password?token=' + jwtDto.token,
     };
 
     // Send recovery password mail

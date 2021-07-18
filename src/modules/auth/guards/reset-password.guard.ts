@@ -6,19 +6,17 @@ import {
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { CONFIG } from 'config/config-keys';
 import { RecoveryPasswordDto } from 'modules/auth/dto/recovery-password.dto';
 import { validateOrReject } from 'class-validator';
 import { Request } from 'express';
-import { JwtService } from '@nestjs/jwt';
 import { plainToClass } from 'class-transformer';
+import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
 
 @Injectable()
 export class ResetPasswordGuard implements CanActivate {
   private readonly logger = new Logger(ResetPasswordGuard.name);
 
-  constructor(private config: ConfigService, private jwtService: JwtService) {}
+  constructor(private authJwt: AuthJwtService) {}
 
   /**
    * Decode and validate recovery token structure
@@ -34,15 +32,11 @@ export class ResetPasswordGuard implements CanActivate {
       throw new UnauthorizedException('Token not provided');
     }
 
-    const secret = this.config.get(CONFIG.RECOVERY_SECRET_KEY);
-
     //validate token and set type
-    const payload = await this.jwtService
-      .verifyAsync(token, { secret })
-      .catch((e) => {
-        this.logger.error('Recovery token error: ' + e.message);
-        throw new UnprocessableEntityException(e.message);
-      });
+    const payload = await this.authJwt.verifyRecovery(token).catch((e) => {
+      this.logger.error('Recovery token error: ' + e.message);
+      throw new UnprocessableEntityException(e.message);
+    });
 
     // Structure validation
     await validateOrReject(plainToClass(RecoveryPasswordDto, payload)).catch(

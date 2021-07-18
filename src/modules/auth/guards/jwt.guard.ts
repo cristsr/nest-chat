@@ -23,7 +23,7 @@ export class JwtGuard extends AuthGuard('jwt') {
 
   /**
    * Allow public endpoints continue with execution
-   * and attach headers to socket in ws context.
+   * and attach headers to client in ws context.
    * @param context
    */
   canActivate(

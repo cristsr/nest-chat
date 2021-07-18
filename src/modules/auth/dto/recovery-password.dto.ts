@@ -5,10 +5,10 @@ export class RecoveryPasswordDto {
   user: string;
 
   @IsNumber()
-  exp: number;
+  exp?: number;
 
   @IsNumber()
-  iat: number;
+  iat?: number;
 }
 
 export class ForgotPasswordDto {

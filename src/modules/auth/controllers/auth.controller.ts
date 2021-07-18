@@ -6,9 +6,8 @@ import {
   Body,
   Query,
   ParseIntPipe,
-  Logger,
 } from '@nestjs/common';
-import { AuthService } from 'modules/auth/services/auth.service';
+import { AuthService } from 'modules/auth/services/auth/auth.service';
 import { Public } from 'modules/auth/decorators/public';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
 import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
@@ -31,7 +30,7 @@ export class AuthController {
   @Public()
   @UseGuards(LocalGuard)
   @Post('login')
-  login(@CurrentUser() user: UserDto): LoginDto {
+  login(@CurrentUser() user: UserDto): Promise<LoginDto> {
     return this.authService.generateJwt(user);
   }
 
