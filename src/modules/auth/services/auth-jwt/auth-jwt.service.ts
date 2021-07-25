@@ -53,15 +53,7 @@ export class AuthJwtService {
   }
 
   // eslint-disable-next-line
-  async verifyAccess<T extends object = any>(token: string, isBearer = false): Promise<T> {
-    if (!token) {
-      throw new JsonWebTokenError('Token not provided');
-    }
-
-    if (isBearer) {
-      token = token.split(' ')[1];
-    }
-
+  async verifyAccess<T extends object = any>(token: string): Promise<T> {
     return this.jwtService.verifyAsync<T>(token, {
       secret: this.config.get(CONFIG.JWT_SECRET_KEY),
     });

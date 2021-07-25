@@ -1,21 +1,24 @@
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsResponse,
 } from '@nestjs/websockets';
 import { Logger, UseGuards } from '@nestjs/common';
-import { ChatService } from 'modules/chat/services/chat.service';
-import { map, Observable, tap } from 'rxjs';
+import { ChatService } from 'modules/chat/services/chat/chat.service';
 import { JwtGuard } from 'modules/auth/guards/jwt.guard';
 import { Socket, Server } from 'socket.io';
 import { UserDto } from 'modules/user/dto/user.dto';
 import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
+import { SocketService } from 'modules/chat/services/clients/socket.service';
+import { PRIVATE_MESSAGE } from 'modules/chat/services/constants';
+import { PrivateMessageDto } from 'modules/chat/dtos/createChatDto';
 
 @UseGuards(JwtGuard)
-@WebSocketGateway({ namespace: '/users' })
+@WebSocketGateway()
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(ChatGateway.name);
 
@@ -25,75 +28,63 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private chatService: ChatService,
     private authJwt: AuthJwtService,
+    private socketService: SocketService,
   ) {}
 
-  async handleConnection(client: Socket): Promise<void> {
-    const { authorization } = client.handshake.headers;
+  /**
+   * Verify JWT and allow connections
+   * @param socket
+   */
+  async handleConnection(socket: Socket): Promise<any> {
+    try {
+      // verify jwt
+      const token = socket.handshake.headers.authorization?.split(' ')[1];
+      const payload = await this.authJwt.verifyAccess<any>(token);
 
-    const user = await this.authJwt
-      .verifyAccess<UserDto>(authorization, true)
-      .catch((e) => {
-        this.logger.error('WS connection error: ' + e.message);
+      // Populate socket with user
+      socket.data.user = {
+        id: payload.id,
+        name: payload.name,
+        email: payload.email,
+        nickname: payload.nickname,
+      } as UserDto;
 
-        // Emmit exception and disconnect
-        client.emit('exception', {
-          status: 'error',
-          message: e.message,
-        });
-
-        client.disconnect();
-
-        return null;
+      // Add socket ref to connections
+      this.socketService.connect(payload.id, socket);
+    } catch (e: any) {
+      this.logger.error('WS connection error: ' + e.message);
+      // Emmit exception
+      socket.emit('exception', {
+        status: 'error',
+        message: e.message,
       });
 
-    if (!user) return;
-
-    if (this.chatService.getUser(user)) {
-      await this.server.allSockets();
-
-      this.logger.warn('Disconnect duplicated socket ' + user.email);
-      // client.disconnect(true);
-      // return;
+      // disconnect socket
+      socket.disconnect(true);
     }
-
-    this.logger.log('User connected ' + user.email);
-
-    // Connect user
-    this.chatService.connectUser({
-      user,
-      client,
-    });
-
-    // Populate user information in client
-    client.data.user = user;
-
-    this.server.emit(
-      'list',
-      this.chatService.usersValue.map((v) => v.user),
-    );
-
-    // this.logger.log();
   }
 
-  handleDisconnect(client: Socket): any {
-    if (!client.data.user) return;
+  /**
+   * method is triggered after socket disconnect method was called
+   * or after client disconnect
+   * @param socket
+   */
+  handleDisconnect(socket: Socket): void {
+    if (socket.data.user) {
+      this.logger.log('handleDisconnect');
+      const { id } = socket.data.user;
 
-    this.logger.log('User disconnected ' + client.data.user.email);
-
-    // Disconnect user
-    this.chatService.disconnectUser(client.data.user);
-
-    return;
+      // Remove client and disconnect
+      this.socketService.disconnect(id);
+    }
   }
 
-  @SubscribeMessage('list')
-  handleList(): Observable<WsResponse> {
-    return this.chatService.getConnectedUsers().pipe(
-      tap((v) => this.logger.log('Total users connected: ' + v.length)),
-      map((v) => ({
-        event: 'list',
-        data: v,
-      })),
-    );
+  @SubscribeMessage(PRIVATE_MESSAGE)
+  handlePrivateMessage(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: PrivateMessageDto,
+  ) {
+    this.logger.log(PRIVATE_MESSAGE + ' event');
+    return this.chatService.privateMessage(data);
   }
 }
