@@ -6,7 +6,7 @@ export type MessageDocument = Message & Document;
 @Schema()
 export class Message {
   @Prop({ required: true })
-  emitter: string;
+  user: string;
 
   @Prop({ required: true })
   message: string;

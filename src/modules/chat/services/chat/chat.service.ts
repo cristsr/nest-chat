@@ -6,14 +6,8 @@ import {
 } from '@nestjs/common';
 import { ChatRepository } from 'modules/chat/repositories/chat.repository';
 import { MessageRepository } from 'modules/chat/repositories/message-repository';
-import {
-  ChatDto,
-  MessageDto,
-  PrivateMessageDto,
-} from 'modules/chat/dtos/createChatDto';
-import { ChatDocument } from 'modules/chat/entities/chat.entity';
+import { ChatDto, MessageDto, PrivateMessageDto } from 'modules/chat/dtos';
 import { MessageDocument } from 'modules/chat/entities/message.entity';
-import { doc } from 'prettier';
 
 @Injectable()
 export class ChatService {
@@ -24,33 +18,32 @@ export class ChatService {
     private messageRepository: MessageRepository,
   ) {}
 
-  async privateMessage(data: PrivateMessageDto): Promise<void> {
-    try {
-      const message: MessageDocument = await this.messageRepository.create({
-        emitter: data.emitter,
-        message: data.message,
-      });
+  /**
+   * Save private message for current user and contact
+   * @param data
+   */
+  async savePrivateMessage(data: PrivateMessageDto): Promise<void> {
+    const message: MessageDocument = await this.messageRepository.create({
+      user: data.user,
+      message: data.message,
+    });
 
-      const userChat: ChatDocument = await this.chatRepository.findOrCreate({
-        user: data.emitter,
-        contact: data.contact,
-      });
+    const [userChat, contactChat] = await this.chatRepository.getChatsFrom(
+      data.user,
+      data.contact,
+    );
 
-      const contactChat: ChatDocument = await this.chatRepository.findOrCreate({
-        user: data.contact,
-        contact: data.emitter,
-      });
+    userChat.messages.push(message.id);
+    await userChat.save();
 
-      userChat.messages.push(message.id);
-      await userChat.save();
-
-      contactChat.messages.push(message.id);
-      await contactChat.save();
-    } catch (e) {
-      throw new InternalServerErrorException(e.message);
-    }
+    contactChat.messages.push(message.id);
+    await contactChat.save();
   }
 
+  /**
+   * Return all chats from current user
+   * @param user
+   */
   async getChats(user: string): Promise<ChatDto[]> {
     const chats = await this.chatRepository.getChats(user);
 
@@ -65,6 +58,10 @@ export class ChatService {
     }));
   }
 
+  /**
+   * Return all messages from given chat id
+   * @param id
+   */
   async getMessagesFromChat(id: string): Promise<MessageDto[]> {
     this.logger.log('getMessagesFromChat execution');
 
@@ -80,7 +77,7 @@ export class ChatService {
 
     return chat.messages.map((document: MessageDocument) => ({
       id: document.id,
-      emitter: document.emitter,
+      user: document.user,
       message: document.message,
       createdAt: document.createdAt,
     }));

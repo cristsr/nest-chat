@@ -1,7 +1,7 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Chat, ChatDocument } from 'modules/chat/entities/chat.entity';
-import { Model, Query, QueryCursor } from 'mongoose';
-import { CreateChatDto } from 'modules/chat/dtos/createChatDto';
+import { Model } from 'mongoose';
+import { CreateChatDto } from 'modules/chat/dtos';
 import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
@@ -11,25 +11,57 @@ export class ChatRepository {
     private chatModel: Model<ChatDocument>,
   ) {}
 
+  /**
+   * Find or create chat object in mongodb
+   * with current user and contact given
+   * @param data
+   */
   async findOrCreate(data: CreateChatDto): Promise<ChatDocument> {
     const chat = await this.chatModel
       .findOne({
-        user: data.user as string,
-        contact: data.contact as string,
+        user: data.user,
+        contact: data.contact,
       })
       .exec();
 
+    // Chat found then return
     if (chat) {
       return chat;
     }
 
     // Create new chat
     return await this.chatModel.create({
-      user: data.user as string,
-      contact: data.contact as string,
+      user: data.user,
+      contact: data.contact,
     });
   }
 
+  /**
+   * find or create chats for current user and contact
+   * in an array of two positions
+   * @param user
+   * @param contact
+   */
+  async getChatsFrom(user: string, contact: string): Promise<ChatDocument[]> {
+    // Chat from current user
+    const userChat: ChatDocument = await this.findOrCreate({
+      user,
+      contact,
+    });
+
+    // Chat from contact
+    const contactChat: ChatDocument = await this.findOrCreate({
+      contact,
+      user,
+    });
+
+    return [userChat, contactChat];
+  }
+
+  /**
+   * Return all chats for the current user
+   * @param user
+   */
   getChats(user): Promise<ChatDocument[]> {
     return this.chatModel
       .find({ user })
@@ -41,27 +73,33 @@ export class ChatRepository {
       .exec();
   }
 
-  getChat(chat: string) {
+  /**
+   * Return a chat by given id
+   * @param chat
+   */
+  getChat(chat: string): Promise<ChatDocument> {
     return this.chatModel
-      .find({
-        _id: chat,
-      })
+      .findById(chat)
       .select('contact')
       .populate({
         path: 'contact',
         select: 'name nickname email',
-      });
+      })
+      .exec();
   }
 
-  getMessagesFromChat(id: string) {
+  /**
+   * Return messages from given chat
+   * @param id
+   */
+  getMessagesFromChat(id: string): Promise<ChatDocument> {
     return this.chatModel
-      .findById({
-        _id: id,
-      })
+      .findById(id)
       .select('messages')
       .populate({
         path: 'messages',
-        select: 'emitter message createdAt',
-      });
+        select: 'user message createdAt',
+      })
+      .exec();
   }
 }

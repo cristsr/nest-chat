@@ -27,7 +27,7 @@ export class ChatDto {
 
 export class CreateMessageDto {
   @IsMongoId()
-  emitter: string;
+  user: string;
 
   @IsString()
   message: string;
@@ -44,7 +44,7 @@ export class MessageDto extends CreateMessageDto {
 
 export class PrivateMessageDto {
   @IsMongoId()
-  emitter: string;
+  user: string;
 
   @IsMongoId()
   contact: string;
