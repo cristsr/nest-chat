@@ -47,6 +47,8 @@ export class ChatService {
   async getChats(user: string): Promise<ChatDto[]> {
     const chats = await this.chatRepository.getChats(user);
 
+    console.log(chats);
+
     return chats.map(({ id, contact }) => ({
       id,
       contact: {

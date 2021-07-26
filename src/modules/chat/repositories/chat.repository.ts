@@ -14,13 +14,14 @@ export class ChatRepository {
   /**
    * Find or create chat object in mongodb
    * with current user and contact given
-   * @param data
+   * @param user
+   * @param contact
    */
-  async findOrCreate(data: CreateChatDto): Promise<ChatDocument> {
+  async findOrCreate(user: string, contact: string): Promise<ChatDocument> {
     const chat = await this.chatModel
       .findOne({
-        user: data.user,
-        contact: data.contact,
+        user,
+        contact,
       })
       .exec();
 
@@ -31,29 +32,23 @@ export class ChatRepository {
 
     // Create new chat
     return await this.chatModel.create({
-      user: data.user,
-      contact: data.contact,
+      user,
+      contact,
     });
   }
 
   /**
    * find or create chats for current user and contact
-   * in an array of two positions
+   * and return in an array of two positions
    * @param user
    * @param contact
    */
   async getChatsFrom(user: string, contact: string): Promise<ChatDocument[]> {
-    // Chat from current user
-    const userChat: ChatDocument = await this.findOrCreate({
-      user,
-      contact,
-    });
+    // Chat current user
+    const userChat: ChatDocument = await this.findOrCreate(user, contact);
 
-    // Chat from contact
-    const contactChat: ChatDocument = await this.findOrCreate({
-      contact,
-      user,
-    });
+    // Chat contact
+    const contactChat: ChatDocument = await this.findOrCreate(contact, user);
 
     return [userChat, contactChat];
   }
@@ -62,7 +57,7 @@ export class ChatRepository {
    * Return all chats for the current user
    * @param user
    */
-  getChats(user): Promise<ChatDocument[]> {
+  getChats(user: string): Promise<ChatDocument[]> {
     return this.chatModel
       .find({ user })
       .select('contact')
