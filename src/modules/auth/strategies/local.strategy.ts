@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import * as bcrypt from 'bcrypt';
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {

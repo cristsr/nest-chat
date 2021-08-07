@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ChatService } from 'modules/chat/services/chat/chat.service';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 import { PrivateMessageDto } from 'modules/chat/dtos';
 import { SocketService } from 'modules/chat/services/socket/socket.service';
 import { PrivateMessage } from 'modules/chat/decorators/private-message';

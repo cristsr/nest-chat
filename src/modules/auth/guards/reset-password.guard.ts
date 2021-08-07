@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { RecoveryPasswordDto } from 'modules/auth/dto/recovery-password.dto';
+import { RecoveryPasswordDto } from 'modules/auth/dtos/recovery-password.dto';
 import { validateOrReject } from 'class-validator';
 import { Request } from 'express';
 import { plainToClass } from 'class-transformer';

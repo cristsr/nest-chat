@@ -10,7 +10,7 @@ import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from 'modules/auth/decorators/public';
 import { Observable } from 'rxjs';
 import { WsException } from '@nestjs/websockets';
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 import { Socket } from 'socket.io';
 
 @Injectable()

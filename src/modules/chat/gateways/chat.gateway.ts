@@ -8,7 +8,7 @@ import {
 import { Logger, UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'modules/auth/guards/jwt.guard';
 import { Socket, Server } from 'socket.io';
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
 import { SocketService } from 'modules/chat/services/socket/socket.service';
 

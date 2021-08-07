@@ -8,13 +8,13 @@ import { ConfigService } from '@nestjs/config';
 import { UserRepository } from 'modules/user/repositories/user/user.repository';
 import { CONFIG } from 'config/config-keys';
 import { UserDocument } from 'modules/user/entities/user.entity';
-import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
-import { LoginDto } from 'modules/auth/dto/login.dto';
+import { CreateUserDto, UserDto } from 'modules/user/dtos/user.dto';
+import { LoginDto } from 'modules/auth/dtos/login.dto';
 import { MailerService } from '../../../../mailer/mailer.service';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
-} from 'modules/auth/dto/recovery-password.dto';
+} from 'modules/auth/dtos/recovery-password.dto';
 import * as bcrypt from 'bcrypt';
 import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
 

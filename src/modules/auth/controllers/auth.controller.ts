@@ -10,14 +10,14 @@ import {
 import { AuthService } from 'modules/auth/services/auth/auth.service';
 import { Public } from 'modules/auth/decorators/public';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
-import { CreateUserDto, UserDto } from 'modules/user/dto/user.dto';
-import { LoginDto } from 'modules/auth/dto/login.dto';
+import { CreateUserDto, UserDto } from 'modules/user/dtos/user.dto';
+import { LoginDto } from 'modules/auth/dtos/login.dto';
 import { uid } from 'uid/secure';
 import {
   ForgotPasswordDto,
   RecoveryPasswordDto,
   ResetPasswordDto,
-} from 'modules/auth/dto/recovery-password.dto';
+} from 'modules/auth/dtos/recovery-password.dto';
 import { RefreshJwtGuard } from 'modules/auth/guards/refresh-jwt.guard';
 import { ResetPasswordGuard } from 'modules/auth/guards/reset-password.guard';
 import { AuthInfo } from 'modules/auth/decorators/auth-info';

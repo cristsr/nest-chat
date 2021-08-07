@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post } from '@nestjs/common';
 import { CurrentUser } from 'modules/auth/decorators/current-user';
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 import { PublicMessage } from 'modules/chat/decorators/public-message';
 import { PublicMessageDto } from 'modules/chat/dtos';
 import { RoomService } from 'modules/chat/services/room/room.service';

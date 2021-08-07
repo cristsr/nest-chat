@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CONFIG } from 'config/config-keys';
-import { JwtDto } from 'modules/auth/dto/login.dto';
+import { JwtDto } from 'modules/auth/dtos/login.dto';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
 @Injectable()

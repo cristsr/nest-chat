@@ -5,8 +5,8 @@ import {
   RecoveryPassword,
   RecoveryPasswordDocument,
 } from 'modules/user/entities/recovery-password.entity';
-import { RecoveryPasswordDto } from 'modules/auth/dto/recovery-password.dto';
-import { UpdateUserDto } from 'modules/user/dto/user.dto';
+import { RecoveryPasswordDto } from 'modules/auth/dtos/recovery-password.dto';
+import { UpdateUserDto } from 'modules/user/dtos/user.dto';
 
 @Injectable()
 export class RecoveryPasswordRepository {

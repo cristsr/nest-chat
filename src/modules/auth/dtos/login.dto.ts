@@ -1,4 +1,4 @@
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 import {
   IsDefined,
   IsOptional,

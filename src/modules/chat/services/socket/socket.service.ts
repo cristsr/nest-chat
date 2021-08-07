@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { PrivateMessageDto, PublicMessageDto } from 'modules/chat/dtos';
-import { UserDto } from 'modules/user/dto/user.dto';
+import { UserDto } from 'modules/user/dtos/user.dto';
 import { Observable, Subject } from 'rxjs';
 
 @Injectable()
