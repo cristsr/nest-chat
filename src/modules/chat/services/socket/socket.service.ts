@@ -59,7 +59,7 @@ export class SocketService {
     }
 
     // emmit event
-    socket.emit('private-message', {
+    socket.emit('chat/message', {
       user: data.user,
       message: data.message,
     });

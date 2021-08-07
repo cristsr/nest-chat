@@ -29,7 +29,7 @@ export class ChatGateway
 
   afterInit(): void {
     this.socketService.emitter.subscribe((data) => {
-      this.server.emit('public-message', data);
+      this.server.emit('room/message', data);
     });
   }
 
