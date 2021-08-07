@@ -14,8 +14,8 @@ export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
   constructor(
-    private chatRepository: ChatRepository,
-    private messageRepository: MessageRepository,
+    private readonly chatRepository: ChatRepository,
+    private readonly messageRepository: MessageRepository,
   ) {}
 
   /**
@@ -64,8 +64,8 @@ export class ChatService {
    * Return all messages from given chat id
    * @param id
    */
-  async getMessagesFromChat(id: string): Promise<MessageDto[]> {
-    this.logger.log('getMessagesFromChat execution');
+  async getMessagesFrom(id: string): Promise<MessageDto[]> {
+    this.logger.log('getMessagesFrom execution');
 
     const chat = await this.chatRepository
       .getMessagesFromChat(id)
@@ -74,7 +74,7 @@ export class ChatService {
       });
 
     if (!chat) {
-      throw new NotFoundException('Chat not found');
+      throw new NotFoundException('Room not found');
     }
 
     return chat.messages.map((document: MessageDocument) => ({

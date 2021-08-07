@@ -8,9 +8,13 @@ import { SocketService } from './services/socket/socket.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Chat, ChatSchema } from 'modules/chat/entities/chat.entity';
 import { Message, MessageSchema } from 'modules/chat/entities/message.entity';
+import { Room, RoomSchema } from 'modules/chat/entities/room.entity';
 import { ChatRepository } from 'modules/chat/repositories/chat.repository';
 import { MessageRepository } from 'modules/chat/repositories/message-repository';
-import { ChatController } from './controllers/chat.controller';
+import { ChatController } from './controllers/chat/chat.controller';
+import { RoomRepository } from 'modules/chat/repositories/room.repository';
+import { RoomService } from './services/room/room.service';
+import { RoomController } from './controllers/room/room.controller';
 
 @Module({
   imports: [
@@ -23,18 +27,24 @@ import { ChatController } from './controllers/chat.controller';
         name: Message.name,
         schema: MessageSchema,
       },
+      {
+        name: Room.name,
+        schema: RoomSchema,
+      },
     ]),
     AuthModule,
     JwtModule.register({}),
   ],
   providers: [
+    RoomRepository,
     ChatRepository,
     MessageRepository,
     ChatGateway,
     ChatService,
     ConnectionService,
     SocketService,
+    RoomService,
   ],
-  controllers: [ChatController],
+  controllers: [ChatController, RoomController],
 })
 export class ChatModule {}

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Chat, ChatDocument } from 'modules/chat/entities/chat.entity';
 import { Model } from 'mongoose';
-import { CreateChatDto } from 'modules/chat/dtos';
 import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
@@ -25,7 +24,7 @@ export class ChatRepository {
       })
       .exec();
 
-    // Chat found then return
+    // Room found then return
     if (chat) {
       return chat;
     }
@@ -44,10 +43,10 @@ export class ChatRepository {
    * @param contact
    */
   async getChatsFrom(user: string, contact: string): Promise<ChatDocument[]> {
-    // Chat current user
+    // Room current user
     const userChat: ChatDocument = await this.findOrCreate(user, contact);
 
-    // Chat contact
+    // Room contact
     const contactChat: ChatDocument = await this.findOrCreate(contact, user);
 
     return [userChat, contactChat];

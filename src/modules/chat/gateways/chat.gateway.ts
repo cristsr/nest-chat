@@ -1,25 +1,22 @@
 import {
-  ConnectedSocket,
-  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
+  OnGatewayInit,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Logger, UseGuards } from '@nestjs/common';
-import { ChatService } from 'modules/chat/services/chat/chat.service';
 import { JwtGuard } from 'modules/auth/guards/jwt.guard';
 import { Socket, Server } from 'socket.io';
 import { UserDto } from 'modules/user/dto/user.dto';
 import { AuthJwtService } from 'modules/auth/services/auth-jwt/auth-jwt.service';
 import { SocketService } from 'modules/chat/services/socket/socket.service';
-import { PRIVATE_MESSAGE } from 'modules/chat/services/constants';
-import { PrivateMessageDto } from 'modules/chat/dtos';
 
 @UseGuards(JwtGuard)
 @WebSocketGateway()
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
+{
   private readonly logger = new Logger(ChatGateway.name);
 
   @WebSocketServer()
@@ -28,8 +25,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private authJwt: AuthJwtService,
     private socketService: SocketService,
-    private chatService: ChatService,
   ) {}
+
+  afterInit(): void {
+    this.socketService.emitter.subscribe((data) => {
+      this.server.emit('public-message', data);
+    });
+  }
 
   /**
    * Verify JWT and allow connections
@@ -51,6 +53,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Add socket ref to connections
       this.socketService.connect(payload.id, socket);
+
+      // Get users and notify
+      const users: UserDto[] = this.socketService.getConnectedUsers();
+      this.server.emit('users', users);
+      //
     } catch (e: any) {
       this.logger.error('WS connection error: ' + e.message);
       // Emmit exception
@@ -77,14 +84,5 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Remove client and disconnect
       this.socketService.disconnect(id);
     }
-  }
-
-  @SubscribeMessage(PRIVATE_MESSAGE)
-  handlePrivateMessage(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() data: PrivateMessageDto,
-  ) {
-    this.logger.log(PRIVATE_MESSAGE + ' event');
-    return this.chatService.savePrivateMessage(data);
   }
 }

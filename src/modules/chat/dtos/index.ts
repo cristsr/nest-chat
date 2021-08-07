@@ -8,14 +8,6 @@ import {
 } from 'class-validator';
 import { UserDto } from 'modules/user/dto/user.dto';
 
-export class CreateChatDto {
-  @IsNotEmpty()
-  user: string;
-
-  @IsNotEmpty()
-  contact: string;
-}
-
 export class ChatDto {
   @IsMongoId()
   id: string;
@@ -51,4 +43,23 @@ export class PrivateMessageDto {
 
   @IsString()
   message: string;
+}
+
+export class PublicMessageDto {
+  @IsMongoId()
+  user: string;
+
+  @IsMongoId()
+  room: string;
+
+  @IsString()
+  message: string;
+}
+
+export class RoomDto {
+  @IsMongoId()
+  id: string;
+
+  @IsString()
+  name: string;
 }

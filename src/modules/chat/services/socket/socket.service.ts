@@ -1,45 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
-import { map, Observable } from 'rxjs';
-import { Store } from 'modules/chat/store/store.service';
-import { initialState, State } from 'modules/chat/store/state';
-import { reducer } from 'modules/chat/store/reducers';
-import { Actions } from 'modules/chat/store/actions';
-import { select } from 'modules/chat/store/operators';
-import { PrivateMessageDto } from 'modules/chat/dtos';
+import { Socket } from 'socket.io';
+import { PrivateMessageDto, PublicMessageDto } from 'modules/chat/dtos';
+import { UserDto } from 'modules/user/dto/user.dto';
+import { Observable, Subject } from 'rxjs';
 
 @Injectable()
 export class SocketService {
   private readonly logger = new Logger(SocketService.name);
 
-  private readonly socketStore = new Store<State>(reducer, initialState);
+  private readonly sockets: { [key: string]: Socket } = {};
 
-  constructor() {
-    this.socketStore.subscribe((state) =>
-      console.log('Sockets connected', Object.keys(state.sockets)),
-    );
-  }
+  private readonly emitter$ = new Subject();
 
-  setServer(server: Server) {
-    this.socketStore.next({
-      type: Actions.SET_SERVER,
-      payload: server,
-    });
+  get emitter(): Observable<any> {
+    return this.emitter$.asObservable();
   }
 
   /**
    * If user already exist in connection repository then  disconnect current socket
    * and CONNECT new user
    */
-  connect(id: string, client: Socket): void {
-    this.logger.log('connect called');
-    this.socketStore.next({
-      type: Actions.CONNECT,
-      payload: {
-        id,
-        client,
-      },
-    });
+  connect(id: string, socket: Socket): void {
+    // Remove user info from socket and disconnect
+    if (this.sockets[id]) {
+      delete this.sockets[id].data.user;
+      this.sockets[id].disconnect(true);
+    }
+
+    // add new socket
+    this.sockets[id] = socket;
+
+    this.logger.log('Socket was connected: ' + id);
   }
 
   /**
@@ -47,37 +38,41 @@ export class SocketService {
    * @param id
    */
   disconnect(id: string): void {
-    this.socketStore.next({
-      type: Actions.DISCONNECT,
-      payload: id,
-    });
-  }
+    if (this.sockets[id]) {
+      // Remove user info
+      delete this.sockets[id].data.user;
+      // Disconnect socket
+      this.sockets[id].disconnect(true);
+    }
+    // Remove socket from object
+    delete this.sockets[id];
 
-  /**
-   * Return socket connected
-   * @param id
-   */
-  getSocket(id: string): Observable<Socket> {
-    return this.socketStore.pipe(
-      select('socket'),
-      map((v) => v[id]),
-    );
+    this.logger.log('Socket was disconnected: ' + id);
   }
 
   sendPrivateMessage(data: PrivateMessageDto) {
-    this.socketStore.next({
-      type: Actions.PRIVATE_MESSAGE,
-      payload: data,
+    const socket = this.sockets[data.contact];
+
+    if (!socket) {
+      this.logger.log('Socket not found');
+      return;
+    }
+
+    // emmit event
+    socket.emit('private-message', {
+      user: data.user,
+      message: data.message,
     });
+
+    this.logger.log('Private message was sent');
   }
 
-  sendPublicMessage(from: string, message: string) {
-    this.socketStore.next({
-      type: Actions.PUBLIC_MESSAGE,
-      payload: {
-        from,
-        message,
-      },
-    });
+  sendPublicMessage(data: PublicMessageDto) {
+    this.emitter$.next(data);
+  }
+
+  getConnectedUsers(): UserDto[] {
+    const sockets: Socket[] = Object.values(this.sockets);
+    return sockets.map((v: Socket) => v.data.user);
   }
 }

@@ -69,30 +69,28 @@ export class JwtGuard extends AuthGuard('jwt') {
   ): any {
     if (user) return user;
 
-    if (info) {
-      this.logger.error('handleRequest: ' + info.message);
+    this.logger.error('handleRequest: ' + info.message);
 
-      // Handle HTTP errors
-      if (context.getType<ContextType>() === 'http') {
-        throw new UnauthorizedException(info.message);
-      }
+    // Handle HTTP errors
+    if (context.getType<ContextType>() === 'http') {
+      throw new UnauthorizedException(info.message);
+    }
 
-      // Handle WS errors
-      if (context.getType<ContextType>() === 'ws') {
-        const client = context.switchToWs().getClient<Socket>();
+    // Handle WS errors
+    if (context.getType<ContextType>() === 'ws') {
+      const client = context.switchToWs().getClient<Socket>();
 
-        // send exception
-        client.emit('exception', {
-          status: 'error',
-          message: info.message,
-        });
+      // send exception
+      client.emit('exception', {
+        status: 'error',
+        message: info.message,
+      });
 
-        // disconnect client
-        client.disconnect(true);
+      // disconnect client
+      client.disconnect(true);
 
-        // hack to blocking execution
-        throw new WsException('');
-      }
+      // hack to blocking execution
+      throw new WsException('');
     }
   }
 }
